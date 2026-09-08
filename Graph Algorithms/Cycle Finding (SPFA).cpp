@@ -8,41 +8,50 @@ struct Edge {
     long long cost;
 };
 
-vector<int> solve(const vector<Edge>& adj, int n) {
-    vector<long long> dist(n);
-    vector<int> from(n);
-    vector<int> cnt(n);
-    vector<int> in_queue(n);
+vector<int> solve(const vector<vector<Edge>>& adj, int n) {
+    vector<long long> dist(n + 1);
+    vector<int> from(n + 1);
+    vector<int> len(n + 1);
+    vector<bool> in_queue(n + 1, 1);
     queue<int> q;
-    int last_node = -1;
+    int last_node = 0;
 
-    q.push(0);
-    while (!q.empty() && last_node == -1) {
+    for (int i = 1; i <= n; i++)
+        q.push(i);
+
+    while (!q.empty() && !last_node) {
         auto v = q.front();
         q.pop();
         in_queue[v] = 0;
-        for (const auto& [u, cost] : adj) {
+        for (const auto& [u, cost] : adj[v]) {
             if (dist[u] > dist[v] + cost) {
                 dist[u] = dist[v] + cost;
                 from[u] = v;
-                if (++cnt[u] == n)
+                len[u] = len[v] + 1;
+                if (len[u] == n) {
                     last_node = u;
+                    break;
+                }
+                if (!in_queue[u]) {
+                    q.push(u);
+                    in_queue[u] = 1;
+                }
             }
         }
     }
 
-    if (last_node == -1)
+    if (!last_node)
         return vector<int>();
 
     for (int i = 0; i < n; i++)
         last_node = from[last_node];
 
     vector<int> ans;
-    ans.push_back(last_node + 1);
+    ans.push_back(last_node);
     last_node = from[last_node];
 
-    while (ans.front() - 1 != last_node) {
-        ans.push_back(last_node + 1);
+    while (ans.front() != last_node) {
+        ans.push_back(last_node);
         last_node = from[last_node];
     }
     ans.push_back(ans.front());
@@ -58,11 +67,10 @@ int main() {
     int n, m;
     cin >> n >> m;
 
-    vector<Edge> edges(m);
+    vector<vector<Edge>> adj(n + 1);
     for (int i = 0; i < m; i++) {
         int a, b, c;
         cin >> a >> b >> c;
-        a--, b--;
         adj[a].push_back({b, c});
     }
 
